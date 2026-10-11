@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Calculate loan EMI, view repayment charts and monthly amortization schedule.">
+  <title>EMI Pro | Smart Loan Calculator</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="EMI Pro home"><span class="brand-icon">₹</span><span>EMI<span class="brand-light">Pro</span></span></a>
+      <span class="top-tag">SMART LOAN PLANNER</span>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">PLAN BETTER. BORROW SMARTER.</span>
+        <h1>Your loan, <span>made clear.</span></h1>
+        <p>Estimate your monthly EMI, understand the interest, and explore your repayment journey before you borrow.</p>
+      </div>
+      <div class="hero-badge"><span>₹</span><small>Plan with confidence</small></div>
+    </section>
+
+    <main>
+      <section class="calculator panel">
+        <div class="section-heading">
+          <div><span class="step-label">STEP 01</span><h2>Loan details</h2></div>
+          <span class="live-pill"><span class="live-dot"></span> Instant estimate</span>
+        </div>
+
+        <form id="emiForm" novalidate>
+          <div class="field-grid">
+            <div class="field full-field">
+              <label for="loanType">Loan type</label>
+              <select id="loanType">
+                <option value="personal">Personal loan</option>
+                <option value="home">Home loan</option>
+                <option value="car">Car loan</option>
+                <option value="education">Education loan</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="loanAmount">Loan amount <span>(₹)</span></label>
+              <input type="number" id="loanAmount" min="1" max="100000000000" step="any" placeholder="e.g. 500000" required>
+              <input type="range" id="amountRange" min="10000" max="10000000" step="10000" value="500000" aria-label="Adjust loan amount">
+              <div class="range-labels"><span>₹10,000</span><span>₹1 crore</span></div>
+            </div>
+            <div class="field">
+              <label for="interestRate">Annual interest rate <span>(%)</span></label>
+              <input type="number" id="interestRate" min="0" max="100" step="0.01" placeholder="e.g. 10" required>
+              <input type="range" id="rateRange" min="0" max="30" step="0.1" value="10" aria-label="Adjust annual interest rate">
+              <div class="range-labels"><span>0%</span><span>30%</span></div>
+            </div>
+            <div class="field">
+              <label for="loanTenure">Loan tenure <span>(years)</span></label>
+              <input type="number" id="loanTenure" min="0.0834" max="100" step="any" placeholder="e.g. 5" required>
+              <input type="range" id="tenureRange" min="1" max="30" step="1" value="5" aria-label="Adjust loan tenure">
+              <div class="range-labels"><span>1 year</span><span>30 years</span></div>
+            </div>
+            <div class="field helper-field">
+              <div class="helper-icon">↗</div>
+              <div><strong>Compare before you commit</strong><p>Change the rate or tenure to see how your monthly payment changes.</p></div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Calculate my EMI <span>→</span></button>
+            <button type="button" id="resetBtn" class="btn btn-secondary">Reset</button>
+          </div>
+          <p id="errorMessage" class="error-message" role="alert" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="results-grid" id="results">
+        <article class="panel emi-panel">
+          <span class="step-label">YOUR ESTIMATE</span>
+          <p class="muted">Monthly EMI</p>
+          <h2 id="monthlyEmi">₹0.00</h2>
+          <p class="muted small">Estimated fixed monthly instalment</p>
+          <div class="emi-divider"></div>
+          <div class="mini-stat"><span>Loan principal</span><strong id="principal">₹0.00</strong></div>
+          <div class="mini-stat"><span>Total interest</span><strong id="totalInterest">₹0.00</strong></div>
+          <div class="mini-stat"><span>Total repayment</span><strong id="totalPayment">₹0.00</strong></div>
+          <div class="mini-stat"><span>Number of payments</span><strong id="totalMonths">0 months</strong></div>
+          <button id="downloadBtn" class="btn btn-download" type="button">↓ Download PDF summary</button>
+        </article>
+
+        <article class="panel chart-panel">
+          <div class="section-heading compact-heading"><div><span class="step-label">BREAKDOWN</span><h2>Where your money goes</h2></div></div>
+          <div class="chart-wrap"><canvas id="loanChart" role="img" aria-label="Doughnut chart showing principal and interest breakdown"></canvas><div class="chart-center"><span>Total repayment</span><strong id="chartTotal">₹0</strong></div></div>
+          <div class="chart-legend">
+            <div><span class="legend-dot principal-dot"></span><span>Principal</span><strong id="principalLegend">₹0.00</strong></div>
+            <div><span class="legend-dot interest-dot"></span><span>Interest</span><strong id="interestLegend">₹0.00</strong></div>
+          </div>
+          <p class="chart-footnote">The chart updates when you calculate a new loan.</p>
+        </article>
+      </section>
+
+      <section class="panel schedule-panel">
+        <div class="section-heading schedule-heading">
+          <div><span class="step-label">STEP 02</span><h2>Monthly repayment schedule</h2><p class="muted">See how each payment reduces your balance over time.</p></div>
+          <label class="table-search" for="scheduleSearch"><span>⌕</span><input id="scheduleSearch" type="search" placeholder="Find a month…" aria-label="Search repayment schedule"></label>
+        </div>
+        <div class="table-summary">
+          <span id="scheduleCount">Calculate an EMI to view your schedule.</span>
+          <span>Amounts shown in INR (₹)</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Month</th><th>Opening balance</th><th>EMI</th><th>Principal paid</th><th>Interest paid</th><th>Closing balance</th></tr></thead>
+            <tbody id="scheduleBody"><tr><td colspan="6" class="empty-state">Your monthly repayment schedule will appear here.</td></tr></tbody>
+          </table>
+        </div>
+        <div class="table-footer"><button type="button" id="showMoreBtn" class="btn btn-secondary hidden">Show all months</button></div>
+      </section>
+
+      <section class="panel compare-panel">
+        <div class="section-heading"><div><span class="step-label">STEP 03</span><h2>Compare loan scenarios</h2><p class="muted">See how a different interest rate could change your EMI.</p></div></div>
+        <div class="comparison-cards" id="comparisonCards">
+          <div class="comparison-card"><span>Current estimate</span><strong id="compareCurrent">₹0.00</strong><small>Monthly EMI</small></div>
+          <div class="comparison-card"><span>Rate 1% lower</span><strong id="compareLower">—</strong><small>Monthly EMI</small></div>
+          <div class="comparison-card"><span>Rate 1% higher</span><strong id="compareHigher">—</strong><small>Monthly EMI</small></div>
+        </div>
+      </section>
+      <p class="disclaimer">Disclaimer: This tool provides an estimate for planning purposes only. Actual EMI, fees, rates, rounding, and repayment terms may differ by lender. It is not financial advice.</p>
+    </main>
+    <footer><a class="brand footer-brand" href="#"><span class="brand-icon">₹</span><span>EMI<span class="brand-light">Pro</span></span></a><span>Built with HTML, CSS & JavaScript</span><a href="#top" id="backTop">Back to top ↑</a></footer>
+  </div>
+</body>
+</html>
